@@ -1,7 +1,9 @@
-a: Easy! as one two three
+# Some doc
+
+a: true
 b:
   c: 2
-  d: [3, 4]
+  d: [3, 4, 5]
   e:
     - name: fred
       value: 3

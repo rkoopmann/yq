@@ -23,11 +23,12 @@ _cgo_export.*
 
 _testmain.go
 coverage.out
+coverage.html
 *.exe
 *.test
 *.prof
 yaml
-vendor/*/
+vendor/
 tmp/
 cover/
 yq

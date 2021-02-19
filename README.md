@@ -1,125 +1,207 @@
 # yq
 
-[![Build Status](https://travis-ci.org/mikefarah/yq.svg?branch=master)](https://travis-ci.org/mikefarah/yq)  ![Docker Pulls](https://img.shields.io/docker/pulls/mikefarah/yq.svg) ![Github Releases (by Release)](https://img.shields.io/github/downloads/mikefarah/yq/total.svg)
+![Build](https://github.com/mikefarah/yq/workflows/Build/badge.svg)  ![Docker Pulls](https://img.shields.io/docker/pulls/mikefarah/yq.svg) ![Github Releases (by Release)](https://img.shields.io/github/downloads/mikefarah/yq/total.svg) ![Go Report](https://goreportcard.com/badge/github.com/mikefarah/yq)
 
 
-a lightweight and portable command-line YAML processor
+a lightweight and portable command-line YAML processor. `yq` uses [jq](https://github.com/stedolan/jq) like syntax but works with yaml files as well as json. It doesn't yet support everything `jq` does - but it does support the most common operations and functions, and more is being added continuously.
 
-The aim of the project is to be the [jq](https://github.com/stedolan/jq) or sed of yaml files.
+yq is written in go - so you can download a dependency free binary for your platform and you are good to go! If you prefer there are a variety of package managers that can be used as well as docker, all listed below.
+
+## V4 released!
+V4 is now officially released, it's quite different from V3 (sorry for the migration), however it is much more similar to ```jq```, using a similar expression syntax and therefore support much more complex functionality! 
+
+If you've been using v3 and want/need to upgrade, checkout the [upgrade guide](https://mikefarah.gitbook.io/yq/v/v4.x/upgrading-from-v3).
+
+Support for v3 will cease August 2021, until then, critical bug and security fixes will still get applied if required.
 
 ## Install
-### On MacOS:
+
+### [Download the latest binary](https://github.com/mikefarah/yq/releases/latest)
+
+### wget
+Use wget to download the pre-compiled binaries:
+
+#### Compressed via tar.gz
+```bash
+wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY}.tar.gz -O - |\
+  tar xz && mv ${BINARY} /usr/bin/yq
+```
+
+#### Plain binary
+
+```bash
+wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq &&\
+    chmod +x /usr/bin/yq
+```
+
+For instance, VERSION=v4.2.0 and BINARY=yq_linux_amd64
+
+### MacOS / Linux via Homebrew:
+Using [Homebrew](https://brew.sh/)
 ```
 brew install yq
 ```
-### On Ubuntu and other Linux distros supporting `snap` packages:
+
+or, for the (deprecated) v3 version:
+
+```
+brew install yq@3
+```
+
+Note that for v3, as it is a versioned brew it will not add the `yq` command to your path automatically. Please follow the instructions given by brew upon installation.
+
+### Linux via snap:
 ```
 snap install yq
 ```
 
-#### Snap notes
-`yq` installs with with [_strict confinement_](https://docs.snapcraft.io/snap-confinement/6233) in snap, this means it doesn't have direct access to root files. To read root files you can:
+or, for the (deprecated) v3 version:
 
 ```
-sudo cat /etc/myfile | yq -r - somecommand
+snap install yq --channel=v3/stable
+```
+
+#### Snap notes
+`yq` installs with [_strict confinement_](https://docs.snapcraft.io/snap-confinement/6233) in snap, this means it doesn't have direct access to root files. To read root files you can:
+
+```
+sudo cat /etc/myfile | yq e '.a.path' - 
 ```
 
 And to write to a root file you can either use [sponge](https://linux.die.net/man/1/sponge):
 ```
-sudo cat /etc/myfile | yq -r - somecommand | sudo sponge /etc/myfile
+sudo cat /etc/myfile | yq e '.a.path = "value"' - | sudo sponge /etc/myfile
 ```
 or write to a temporary file:
 ```
-sudo cat /etc/myfile | yq -r - somecommand | sudo tee /etc/myfile.tmp
+sudo cat /etc/myfile | yq e '.a.path = "value"' | sudo tee /etc/myfile.tmp
 sudo mv /etc/myfile.tmp /etc/myfile
 rm /etc/myfile.tmp
 ```
 
-### On Ubuntu 16.04 or higher from Debian package:
+### Run with Docker
+
+#### Oneshot use:
+
+```bash
+docker run --rm -v "${PWD}":/workdir mikefarah/yq <command> [flags] [expression ]FILE...
 ```
+
+#### Run commands interactively:
+
+```bash
+docker run --rm -it -v "${PWD}":/workdir --entrypoint sh mikefarah/yq
+```
+
+It can be useful to have a bash function to avoid typing the whole docker command:
+
+```bash
+yq() {
+  docker run --rm -i -v "${PWD}":/workdir mikefarah/yq "$@"
+}
+```
+
+### Go Get:
+```
+GO111MODULE=on go get github.com/mikefarah/yq/v4
+```
+
+## Community Supported Installation methods
+As these are supported by the community :heart: - however, they may be out of date with the officially supported releases.
+
+# Webi
+
+```
+webi yq
+```
+
+See [webi](https://webinstall.dev/)
+Supported by @adithyasunil26 (https://github.com/webinstall/webi-installers/tree/master/yq)
+
+### Windows:
+```
+choco install yq
+```
+Supported by @chillum (https://chocolatey.org/packages/yq)
+
+### Mac:
+Using [MacPorts](https://www.macports.org/)
+```
+sudo port selfupdate
+sudo port install yq
+```
+Supported by @herbygillot (https://ports.macports.org/maintainer/github/herbygillot)
+
+### Alpine Linux
+- Enable edge/community repo by adding ```$MIRROR/alpine/edge/community``` to ```/etc/apk/repositories```
+- Update database index with ```apk update```
+- Install yq with ```apk add yq```
+
+Supported by Tuan Hoang
+https://pkgs.alpinelinux.org/package/edge/community/x86/yq
+
+
+### On Ubuntu 16.04 or higher from Debian package:
+```sh
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CC86BB64
 sudo add-apt-repository ppa:rmescandon/yq
 sudo apt update
 sudo apt install yq -y
 ```
-### or, [Download latest binary](https://github.com/mikefarah/yq/releases/latest) or alternatively:
-```
-go get gopkg.in/mikefarah/yq.v2
-```
-
-## Run with Docker
-
-Oneshot use:
-
-```bash
-docker run --rm -v ${PWD}:/workdir mikefarah/yq yq [flags] <command> FILE...
-```
-
-Run commands interactively:
-
-```bash
-docker run --rm -it -v ${PWD}:/workdir mikefarah/yq sh
-```
-
-It can be useful to have a bash alias to avoid typing the whole docker command:
-
-```bash
-alias yq="docker run --rm -v ${PWD}:/workdir mikefarah/yq yq"
-```
+Supported by @rmescandon (https://launchpad.net/~rmescandon/+archive/ubuntu/yq)
 
 ## Features
 - Written in portable go, so you can download a lovely dependency free binary
-- Deep read a yaml file with a given path
-- Update a yaml file given a path
-- Update a yaml file given a script file
-- Update creates any missing entries in the path on the fly
-- Create a yaml file given a deep path and value
-- Create a yaml file given a script file
-- Prefix a path to a yaml file
-- Convert from json to yaml
-- Convert from yaml to json
-- Pipe data in by using '-'
-- Merge multiple yaml files where each additional file sets values for missing or null value keys.
-- Merge multiple yaml files and override previous values.
-- Merge multiple yaml files and append array values.
-- Supports multiple documents in a single yaml file
+- Uses similar syntax as `jq` but works with YAML and JSON files
+- Fully supports multi document yaml files
+- Colorized yaml output
+- [Deeply traverse yaml](https://mikefarah.gitbook.io/yq/v/v4.x/traverse)
+- [Sort yaml by keys](https://mikefarah.gitbook.io/yq/v/v4.x/sort-keys)
+- Manipulate yaml [comments](https://mikefarah.gitbook.io/yq/comment-operators), [styling](https://mikefarah.gitbook.io/yq/style), [tags](https://mikefarah.gitbook.io/yq/tag) and [anchors and aliases](https://mikefarah.gitbook.io/yq/anchor-and-alias-operators).
+- [Update yaml inplace](https://mikefarah.gitbook.io/yq/v/v4.x/commands/evaluate#flags)
+- [Complex expressions to select and update](https://mikefarah.gitbook.io/yq/v/v4.x/select#select-and-update-matching-values-in-map)
+- Keeps yaml formatting and comments when updating (though there are issues with whitespace)
+- [Convert to/from json to yaml](https://mikefarah.gitbook.io/yq/v/v4.x/usage/convert)
+- [Pipe data in by using '-'](https://mikefarah.gitbook.io/yq/v/v4.x/commands/evaluate)
+- [General shell completion scripts (bash/zsh/fish/powershell)](https://mikefarah.gitbook.io/yq/v/v4.x/commands/shell-completion)
 
-## [Usage](http://mikefarah.github.io/yq/)
+## [Usage](https://mikefarah.gitbook.io/yq/)
 
-Check out the [documentation](http://mikefarah.github.io/yq/) for more detailed and advanced usage.
+Check out the [documentation](https://mikefarah.gitbook.io/yq/) for more detailed and advanced usage.
 
 ```
-yq is a lightweight and portable command-line YAML processor. It aims to be the jq or sed of yaml files.
-
 Usage:
   yq [flags]
   yq [command]
 
 Available Commands:
-  delete      yq d [--inplace/-i] [--doc/-d index] sample.yaml a.b.c
-  help        Help about any command
-  merge       yq m [--inplace/-i] [--doc/-d index] [--overwrite/-x] [--append/-a] sample.yaml sample2.yaml
-  new         yq n [--script/-s script_file] a.b.c newValue
-  prefix      yq p [--inplace/-i] [--doc/-d index] sample.yaml a.b.c
-  read        yq r [--doc/-d index] sample.yaml a.b.c
-  write       yq w [--inplace/-i] [--script/-s script_file] [--doc/-d index] sample.yaml a.b.c newValue
+  eval             Apply expression to each document in each yaml file given in sequence
+  eval-all         Loads _all_ yaml documents of _all_ yaml files and runs expression once
+  help             Help about any command
+  shell-completion Generate completion script
 
 Flags:
-  -h, --help      help for yq
-  -t, --trim      trim yaml output (default true)
-  -v, --verbose   verbose mode
-  -V, --version   Print version information and quit
+  -C, --colors        force print with colors
+  -e, --exit-status   set exit status if there are no matches or null or false is returned
+  -h, --help          help for yq
+  -I, --indent int    sets indent level for output (default 2)
+  -i, --inplace       update the yaml file inplace of first yaml file given.
+  -M, --no-colors     force print with no colors
+  -N, --no-doc        Don't print document separators (---)
+  -n, --null-input    Don't read input, simply evaluate the expression given. Useful for creating yaml docs from scratch.
+  -P, --prettyPrint    pretty print, shorthand for '... style = ""' 
+  -j, --tojson        output as json. Set indent to 0 to print json in one line.
+  -v, --verbose       verbose mode
+  -V, --version       Print version information and quit
 
 Use "yq [command] --help" for more information about a command.
 ```
 
-## Contribute
-1. `scripts/devtools.sh`
-2. `make [local] vendor`
-3. add unit tests
-4. apply changes (use govendor with a preference to [gopkg](https://gopkg.in/) for package dependencies)
-5. `make [local] build`
-6. If required, update the user documentation
-    - Update README.md and/or documentation under the mkdocs folder
-    - `make [local] build-docs`
-    - browse to docs/index.html and check your changes
-7. profit
+Simple Example:
+
+```bash
+yq e '.a.b | length' f1.yml f2.yml 
+```
+
+## Known Issues / Missing Features
+- `yq` attempts to preserve comment positions and whitespace as much as possible, but it does not handle all scenarios (see https://github.com/go-yaml/yaml/tree/v3 for details)

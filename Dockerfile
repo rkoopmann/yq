@@ -1,4 +1,4 @@
-FROM golang:1.11 as builder
+FROM golang:1.15 as builder
 
 WORKDIR /go/src/mikefarah/yq
 
@@ -6,17 +6,13 @@ WORKDIR /go/src/mikefarah/yq
 COPY ./scripts/devtools.sh /go/src/mikefarah/yq/scripts/devtools.sh
 RUN ./scripts/devtools.sh
 
-# cache vendor
-COPY ./vendor/vendor.json /go/src/mikefarah/yq/vendor/vendor.json
-RUN govendor sync
-
 COPY . /go/src/mikefarah/yq
 
 RUN CGO_ENABLED=0 make local build
 
 # Choose alpine as a base image to make this useful for CI, as many
 # CI tools expect an interactive shell inside the container
-FROM alpine:3.8 as production
+FROM alpine:3.12.3 as production
 
 COPY --from=builder /go/src/mikefarah/yq/yq /usr/bin/yq
 RUN chmod +x /usr/bin/yq
@@ -25,3 +21,5 @@ ARG VERSION=none
 LABEL version=${VERSION}
 
 WORKDIR /workdir
+
+ENTRYPOINT ["/usr/bin/yq"]

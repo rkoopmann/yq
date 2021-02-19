@@ -3,24 +3,19 @@
 set -o errexit
 set -o pipefail
 
-gometalinter \
-  --skip=examples \
-  --tests \
-  --vendor \
-  --disable=aligncheck \
-  --disable=gotype \
-  --disable=goconst \
-  --cyclo-over=20 \
-  --deadline=300s \
-  ./...
+if command -v golangci-lint &> /dev/null
+then
+    golangci-lint run --timeout=5m
+else
+  ./bin/golangci-lint run --timeout=5m
+fi
 
-gometalinter \
-  --skip=examples \
-  --tests \
-  --vendor \
-  --disable=aligncheck \
-  --disable=gotype \
-  --disable=goconst \
-  --disable=gocyclo \
-  --deadline=300s \
-  ./...
+# ./bin/golangci-lint \
+#   --tests \
+#   --vendor \
+#   --disable=aligncheck \
+#   --disable=gotype \
+#   --disable=goconst \
+#   --disable=gocyclo \
+#   --deadline=300s \
+#   ./...
